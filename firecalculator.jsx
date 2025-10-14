@@ -4,12 +4,12 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selectedCell, onCellClick }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
 
-  const width = 800;
-  const height = 600;
-  const marginLeft = 80;
-  const marginRight = 40;
-  const marginTop = 40;
-  const marginBottom = 80;
+  const width = 600;
+  const height = 400;
+  const marginLeft = 60;
+  const marginRight = 30;
+  const marginTop = 30;
+  const marginBottom = 50;
 
   const plotWidth = width - marginLeft - marginRight;
   const plotHeight = height - marginTop - marginBottom;
@@ -422,65 +422,67 @@ const FIRECalculator = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 bg-gray-50 p-6 rounded-lg">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6 bg-gray-50 p-4 rounded-lg text-sm">
         <div>
-          <label className="block text-sm font-medium mb-1">Working Income</label>
+          <label className="block text-xs font-medium mb-1">Working Income</label>
           <input
             type="number"
             value={inputs.workingIncome}
             onChange={(e) => setInputs({...inputs, workingIncome: Number(e.target.value)})}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Retired Income</label>
+          <label className="block text-xs font-medium mb-1">Retired Income</label>
           <input
             type="number"
             value={inputs.retiredIncome}
             onChange={(e) => setInputs({...inputs, retiredIncome: Number(e.target.value)})}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Base Annual Spending</label>
+          <label className="block text-xs font-medium mb-1">Base Annual Spending</label>
           <input
             type="number"
             value={inputs.baseSpending}
             onChange={(e) => setInputs({...inputs, baseSpending: Number(e.target.value)})}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
           />
         </div>
         
         {mode === 'simple' && (
           <div>
-            <label className="block text-sm font-medium mb-1">Retirement Year</label>
+            <label className="block text-xs font-medium mb-1">Retirement Year</label>
             <input
               type="number"
               value={inputs.retirementYear}
               onChange={(e) => setInputs({...inputs, retirementYear: Number(e.target.value)})}
-              className="w-full p-2 border rounded"
+              className="w-full p-1.5 border rounded text-sm"
             />
           </div>
         )}
 
         {mode === 'advanced' && (
-          <div className="bg-gray-100 p-3 rounded">
-            <label className="block text-sm font-medium mb-1 text-gray-600">Retirement Year</label>
-            <div className="text-sm text-gray-500 italic">Controlled by grid selection</div>
-            <div className="text-lg font-semibold text-gray-700 mt-1">
+          <div className="bg-gray-100 p-2 rounded">
+            <div className="flex items-center justify-between mb-0.5">
+              <label className="text-xs font-medium text-gray-600">Retirement Year</label>
+              <span className="text-xs text-gray-500 italic">Grid controlled</span>
+            </div>
+            <div className="text-base font-semibold text-gray-700">
               {selectedCell ? selectedCell.retirementYear : inputs.retirementYear}
             </div>
           </div>
         )}
         
         <div>
-          <label className="block text-sm font-medium mb-1">Filing Status</label>
+          <label className="block text-xs font-medium mb-1">Filing Status</label>
           <select
             value={inputs.filingStatus}
             onChange={(e) => setInputs({...inputs, filingStatus: e.target.value})}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
           >
             <option value="single">Single</option>
             <option value="married">Married</option>
@@ -488,11 +490,11 @@ const FIRECalculator = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">State</label>
+          <label className="block text-xs font-medium mb-1">State</label>
           <select
             value={inputs.state}
             onChange={(e) => setInputs({...inputs, state: e.target.value})}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
           >
             <option value="ny">New York</option>
             <option value="none">No State Tax</option>
@@ -500,11 +502,11 @@ const FIRECalculator = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">City</label>
+          <label className="block text-xs font-medium mb-1">City</label>
           <select
             value={inputs.city}
             onChange={(e) => setInputs({...inputs, city: e.target.value})}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
           >
             <option value="nyc">NYC</option>
             <option value="none">No City Tax</option>
@@ -512,12 +514,12 @@ const FIRECalculator = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Return Rate (% real)</label>
+          <label className="block text-xs font-medium mb-1">Return Rate (% real)</label>
           <input
             type="number"
             value={inputs.returnRate}
             onChange={(e) => setInputs({...inputs, returnRate: Number(e.target.value)})}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
           />
         </div>
         
@@ -535,12 +537,12 @@ const FIRECalculator = () => {
 
             {inputs.includeChild && (
               <div>
-                <label className="block text-sm font-medium mb-1">Child Birth Year</label>
+                <label className="block text-xs font-medium mb-1">Child Birth Year</label>
                 <input
                   type="number"
                   value={inputs.childBirthYear}
                   onChange={(e) => setInputs({...inputs, childBirthYear: Number(e.target.value)})}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-1.5 border rounded text-sm"
                 />
               </div>
             )}
@@ -548,10 +550,12 @@ const FIRECalculator = () => {
         )}
 
         {mode === 'advanced' && (
-          <div className="bg-gray-100 p-3 rounded">
-            <label className="block text-sm font-medium mb-1 text-gray-600">Child Birth Year</label>
-            <div className="text-sm text-gray-500 italic">Controlled by grid selection</div>
-            <div className="text-lg font-semibold text-gray-700 mt-1">
+          <div className="bg-gray-100 p-2 rounded">
+            <div className="flex items-center justify-between mb-0.5">
+              <label className="text-xs font-medium text-gray-600">Child Birth Year</label>
+              <span className="text-xs text-gray-500 italic">Grid controlled</span>
+            </div>
+            <div className="text-base font-semibold text-gray-700">
               {selectedCell
                 ? (selectedCell.childBirthYear === -1 ? 'None' : selectedCell.childBirthYear)
                 : (inputs.includeChild ? inputs.childBirthYear : 'None')
@@ -561,69 +565,106 @@ const FIRECalculator = () => {
         )}
       </div>
 
-      {retirementYear && (
-        <div className="mb-8 p-4 bg-blue-50 rounded-lg">
-          <h2 className="text-xl font-semibold mb-2">At Retirement (Year {displayRetirementYear})</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <div className="text-sm text-gray-600">Portfolio Value</div>
-              <div className="text-lg font-bold">${retirementYear.portfolio.toLocaleString()}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-600">Annual Spending</div>
-              <div className="text-lg font-bold">${retirementYear.spending.toLocaleString()}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-600">Sustainability</div>
-              <div className={`text-lg font-bold ${portfolioRunsOut ? 'text-red-600' : 'text-green-600'}`}>
-                {portfolioRunsOut ? `✗ Runs out year ${yearRunsOut}` : '✓ Sustainable (100 yrs)'}
+      {mode === 'simple' ? (
+        // Simple mode: stacked layout
+        <>
+          {retirementYear && (
+            <div className="mb-6 p-3 bg-blue-50 rounded-lg">
+              <h2 className="text-lg font-semibold mb-2">At Retirement (Year {displayRetirementYear})</h2>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <div className="text-xs text-gray-600">Portfolio Value</div>
+                  <div className="text-base font-bold">${retirementYear.portfolio.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-600">Annual Spending</div>
+                  <div className="text-base font-bold">${retirementYear.spending.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-600">Sustainability</div>
+                  <div className={`text-base font-bold ${portfolioRunsOut ? 'text-red-600' : 'text-green-600'}`}>
+                    {portfolioRunsOut ? `✗ Runs out year ${yearRunsOut}` : '✓ Sustainable'}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="mt-3 text-sm text-gray-600">
-            Simulation shows portfolio trajectory for 100 years. All values in today's dollars (inflation-adjusted).
-          </div>
-        </div>
-      )}
+          )}
 
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Portfolio Growth & Annual Spending</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" />
-            <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right" />
-            <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
-            <Legend />
-            <Line yAxisId="left" type="monotone" dataKey="portfolio" stroke="#2563eb" strokeWidth={2} name="Portfolio" />
-            <Line yAxisId="right" type="monotone" dataKey="spending" stroke="#16a34a" strokeWidth={2} name="Annual Spending" />
-          </LineChart>
-        </ResponsiveContainer>
-        <div className="text-xs text-gray-500 mt-1">
-          Chart shows first 35 years. Full 100-year simulation runs in background for sustainability check.
-        </div>
-      </div>
-
-      {mode === 'advanced' && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Scenario Explorer: Retirement Year vs Child Birth Year</h2>
-          <div className="text-sm text-gray-600 mb-4">
-            Click any cell to see detailed year-by-year breakdown. Colors show sustainability (continuous gradient):
-            <span className="ml-2">🔴 Runs out quickly</span>
-            <span className="ml-2">→ 🟡 Marginal →</span>
-            <span className="ml-2">🟢 Sustainable</span>
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2">Portfolio Growth & Annual Spending</h2>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="year" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                <Legend />
+                <Line yAxisId="left" type="monotone" dataKey="portfolio" stroke="#2563eb" strokeWidth={2} name="Portfolio" />
+                <Line yAxisId="right" type="monotone" dataKey="spending" stroke="#16a34a" strokeWidth={2} name="Annual Spending" />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          <SVGHeatmap
-            data={heatmapData}
-            retirementYears={retirementYears}
-            childBirthYears={childBirthYears}
-            getColor={getColor}
-            selectedCell={selectedCell}
-            onCellClick={(retYear, childYear) => {
-              setSelectedCell({ retirementYear: retYear, childBirthYear: childYear });
-            }}
-          />
+        </>
+      ) : (
+        // Advanced mode: side-by-side layout
+        <div className="mb-6 flex gap-4">
+          <div className="flex-shrink-0">
+            <h2 className="text-base font-semibold mb-1">Scenario Explorer</h2>
+            <div className="text-xs text-gray-600 mb-1">
+              Click cells: <span className="text-red-600">■</span> Runs out → <span className="text-yellow-600">■</span> Marginal → <span className="text-green-600">■</span> Sustainable
+            </div>
+            <SVGHeatmap
+              data={heatmapData}
+              retirementYears={retirementYears}
+              childBirthYears={childBirthYears}
+              getColor={getColor}
+              selectedCell={selectedCell}
+              onCellClick={(retYear, childYear) => {
+                setSelectedCell({ retirementYear: retYear, childBirthYear: childYear });
+              }}
+            />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {retirementYear && (
+              <div className="mb-2 p-2 bg-blue-50 rounded-lg">
+                <h2 className="text-sm font-semibold mb-1">At Retirement (Year {displayRetirementYear})</h2>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <div className="text-xs text-gray-600">Portfolio</div>
+                    <div className="text-sm font-bold">${retirementYear.portfolio.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">Spending</div>
+                    <div className="text-sm font-bold">${retirementYear.spending.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">Sustainability</div>
+                    <div className={`text-sm font-bold ${portfolioRunsOut ? 'text-red-600' : 'text-green-600'}`}>
+                      {portfolioRunsOut ? `✗ Year ${yearRunsOut}` : '✓ 100 yrs'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h2 className="text-base font-semibold mb-1">Portfolio Growth & Spending</h2>
+              <ResponsiveContainer width="100%" height={350}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="year" tick={{fontSize: 11}} />
+                  <YAxis yAxisId="left" tick={{fontSize: 11}} animationDuration={500} />
+                  <YAxis yAxisId="right" orientation="right" tick={{fontSize: 11}} animationDuration={500} />
+                  <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                  <Legend wrapperStyle={{fontSize: 12}} />
+                  <Line yAxisId="left" type="monotone" dataKey="portfolio" stroke="#2563eb" strokeWidth={2} name="Portfolio" animationDuration={500} />
+                  <Line yAxisId="right" type="monotone" dataKey="spending" stroke="#16a34a" strokeWidth={2} name="Spending" animationDuration={500} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
       )}
 
