@@ -1,5 +1,196 @@
 import React, { useState } from 'react';
-import { LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selectedCell, onCellClick }) => {
+  const [hoveredCell, setHoveredCell] = useState(null);
+
+  const width = 800;
+  const height = 600;
+  const marginLeft = 80;
+  const marginRight = 40;
+  const marginTop = 40;
+  const marginBottom = 80;
+
+  const plotWidth = width - marginLeft - marginRight;
+  const plotHeight = height - marginTop - marginBottom;
+
+  const cellWidth = plotWidth / retirementYears.length;
+  const cellHeight = plotHeight / childBirthYears.length;
+
+  const xScale = (retYear) => marginLeft + (retYear - 5) * cellWidth;
+  // Reverse Y-axis: 0 at bottom, 25 at top, -1 (no child) above 25
+  const yScale = (childYear) => {
+    if (childYear === -1) {
+      return marginTop; // No child at the top
+    }
+    return height - marginBottom - (childYear + 1) * cellHeight; // 0 at bottom, 25 near top
+  };
+
+  return (
+    <div className="relative">
+      <svg width={width} height={height} className="border border-gray-200">
+        {/* Grid lines */}
+        <g>
+          {retirementYears.filter((_, i) => i % 5 === 0).map(year => (
+            <line
+              key={`vline-${year}`}
+              x1={xScale(year)}
+              y1={marginTop}
+              x2={xScale(year)}
+              y2={height - marginBottom}
+              stroke="#e5e7eb"
+              strokeWidth={1}
+            />
+          ))}
+          {childBirthYears.filter((_, i) => i % 5 === 0).map(year => (
+            <line
+              key={`hline-${year}`}
+              x1={marginLeft}
+              y1={yScale(year)}
+              x2={width - marginRight}
+              y2={yScale(year)}
+              stroke="#e5e7eb"
+              strokeWidth={1}
+            />
+          ))}
+        </g>
+
+        {/* Heatmap cells */}
+        <g>
+          {data.map((cell) => {
+            const x = xScale(cell.retirementYear);
+            const y = yScale(cell.childBirthYear);
+            const isSelected = selectedCell?.retirementYear === cell.retirementYear &&
+                              selectedCell?.childBirthYear === cell.childBirthYear;
+            const isHovered = hoveredCell?.retirementYear === cell.retirementYear &&
+                             hoveredCell?.childBirthYear === cell.childBirthYear;
+
+            return (
+              <rect
+                key={`${cell.retirementYear}-${cell.childBirthYear}`}
+                x={x}
+                y={y}
+                width={cellWidth}
+                height={cellHeight}
+                fill={getColor(cell.metric)}
+                stroke={isSelected ? '#2563eb' : isHovered ? '#6b7280' : 'none'}
+                strokeWidth={isSelected ? 3 : isHovered ? 2 : 0}
+                style={{ cursor: 'pointer' }}
+                onClick={() => onCellClick(cell.retirementYear, cell.childBirthYear)}
+                onMouseEnter={() => setHoveredCell(cell)}
+                onMouseLeave={() => setHoveredCell(null)}
+              />
+            );
+          })}
+        </g>
+
+        {/* X-axis */}
+        <g>
+          <line
+            x1={marginLeft}
+            y1={height - marginBottom}
+            x2={width - marginRight}
+            y2={height - marginBottom}
+            stroke="black"
+            strokeWidth={2}
+          />
+          {[5, 10, 15, 20, 25, 30].map(year => (
+            <g key={`xtick-${year}`}>
+              <line
+                x1={xScale(year)}
+                y1={height - marginBottom}
+                x2={xScale(year)}
+                y2={height - marginBottom + 6}
+                stroke="black"
+                strokeWidth={2}
+              />
+              <text
+                x={xScale(year) + cellWidth / 2}
+                y={height - marginBottom + 20}
+                textAnchor="middle"
+                fontSize={12}
+              >
+                {year}
+              </text>
+            </g>
+          ))}
+          <text
+            x={marginLeft + plotWidth / 2}
+            y={height - 20}
+            textAnchor="middle"
+            fontSize={14}
+            fontWeight="bold"
+          >
+            Retirement Year
+          </text>
+        </g>
+
+        {/* Y-axis */}
+        <g>
+          <line
+            x1={marginLeft}
+            y1={marginTop}
+            x2={marginLeft}
+            y2={height - marginBottom}
+            stroke="black"
+            strokeWidth={2}
+          />
+          {[0, 5, 10, 15, 20, 25, -1].map(year => (
+            <g key={`ytick-${year}`}>
+              <line
+                x1={marginLeft - 6}
+                y1={yScale(year) + cellHeight / 2}
+                x2={marginLeft}
+                y2={yScale(year) + cellHeight / 2}
+                stroke="black"
+                strokeWidth={2}
+              />
+              <text
+                x={marginLeft - 10}
+                y={yScale(year) + cellHeight / 2 + 4}
+                textAnchor="end"
+                fontSize={12}
+              >
+                {year === -1 ? 'None' : year}
+              </text>
+            </g>
+          ))}
+          <text
+            x={20}
+            y={marginTop + plotHeight / 2}
+            textAnchor="middle"
+            fontSize={14}
+            fontWeight="bold"
+            transform={`rotate(-90, 20, ${marginTop + plotHeight / 2})`}
+          >
+            Child Birth Year
+          </text>
+        </g>
+      </svg>
+
+      {/* Tooltip */}
+      {hoveredCell && (
+        <div
+          className="absolute bg-white p-3 border-2 border-gray-300 rounded shadow-lg pointer-events-none"
+          style={{
+            left: xScale(hoveredCell.retirementYear) + cellWidth + 10,
+            top: yScale(hoveredCell.childBirthYear)
+          }}
+        >
+          <p className="font-semibold text-sm">Retirement: Year {hoveredCell.retirementYear}</p>
+          <p className="font-semibold text-sm">
+            Child: {hoveredCell.childBirthYear === -1 ? 'None' : `Year ${hoveredCell.childBirthYear}`}
+          </p>
+          <p className="mt-1 text-sm">
+            {hoveredCell.metric < 100
+              ? `Runs out: Year ${hoveredCell.metric.toFixed(0)}`
+              : `Sustainable: ${hoveredCell.metric.toFixed(0)} years`}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const FIRECalculator = () => {
   const [inputs, setInputs] = useState({
@@ -157,35 +348,49 @@ const FIRECalculator = () => {
     return Math.min(100 + yearsWorth, 500);
   };
 
-  // Calculate heatmap data
+  // Calculate heatmap data - only store metrics, not full results
   const retirementYears = Array.from({length: 26}, (_, i) => i + 5); // 5-30
-  const childBirthYears = [-1, ...Array.from({length: 26}, (_, i) => i)]; // "none" then 0-25
-  
-  const heatmapData = retirementYears.map(retYear => {
-    return childBirthYears.map(childYear => {
+  const childBirthYears = [...Array.from({length: 26}, (_, i) => i), -1]; // 0-25 then "none"
+
+  // Only store metrics for heatmap visualization
+  const heatmapData = [];
+  retirementYears.forEach(retYear => {
+    childBirthYears.forEach(childYear => {
       const results = calculateYearByYear(retYear, childYear, childYear >= 0);
       const metric = getSustainabilityMetric(results);
-      return {
+      heatmapData.push({
         retirementYear: retYear,
         childBirthYear: childYear,
-        metric,
-        results
-      };
+        metric
+      });
     });
   });
 
-  // Color scale function
+  // Continuous color scale function (red → yellow → green)
   const getColor = (metric) => {
-    if (metric < 10) return '#7f1d1d';
-    if (metric < 30) return '#dc2626';
-    if (metric < 50) return '#f97316';
-    if (metric < 100) return '#eab308';
-    if (metric < 150) return '#84cc16';
-    if (metric < 250) return '#22c55e';
-    return '#15803d';
+    // Normalize metric to 0-1 scale
+    const normalized = Math.min(Math.max((metric - 10) / 240, 0), 1); // 10-250 range
+
+    if (normalized < 0.5) {
+      // Red to Yellow (0-0.5)
+      const t = normalized * 2;
+      return `rgb(${Math.round(220 + (254 - 220) * t)}, ${Math.round(38 + (215 - 38) * t)}, 38)`;
+    } else {
+      // Yellow to Green (0.5-1.0)
+      const t = (normalized - 0.5) * 2;
+      return `rgb(${Math.round(254 - (254 - 34) * t)}, ${Math.round(215 + (197 - 215) * t)}, ${Math.round(38 + (94 - 38) * t)})`;
+    }
   };
 
-  const selectedCellData = selectedCell ? heatmapData[selectedCell.retIndex][selectedCell.childIndex] : null;
+  // Calculate selected cell data on-demand
+  const selectedCellData = selectedCell ? {
+    ...selectedCell,
+    results: calculateYearByYear(selectedCell.retirementYear, selectedCell.childBirthYear, selectedCell.childBirthYear >= 0),
+    metric: heatmapData.find(d =>
+      d.retirementYear === selectedCell.retirementYear &&
+      d.childBirthYear === selectedCell.childBirthYear
+    )?.metric
+  } : null;
 
   return (
     <div className="w-full max-w-7xl mx-auto p-6 bg-white">
@@ -348,57 +553,21 @@ const FIRECalculator = () => {
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Scenario Explorer: Retirement Year vs Child Birth Year</h2>
         <div className="text-sm text-gray-600 mb-4">
-          Click any cell to see detailed year-by-year breakdown. Colors show sustainability:
+          Click any cell to see detailed year-by-year breakdown. Colors show sustainability (continuous gradient):
           <span className="ml-2">🔴 Runs out quickly</span>
-          <span className="ml-2">🟡 Marginal</span>
+          <span className="ml-2">→ 🟡 Marginal →</span>
           <span className="ml-2">🟢 Sustainable</span>
-          <span className="ml-2">💚 High safety margin</span>
         </div>
-        <div className="overflow-x-auto">
-          <div className="inline-block min-w-full">
-            <div className="flex">
-              <div className="w-16"></div>
-              <div className="flex-1">
-                <div className="flex text-xs font-medium text-center mb-1">
-                  {retirementYears.map(year => (
-                    <div key={year} className="flex-1 px-1">
-                      {year}
-                    </div>
-                  ))}
-                </div>
-                <div className="text-xs text-gray-500 text-center mb-2">Retirement Year →</div>
-              </div>
-            </div>
-            {childBirthYears.map((childYear, childIndex) => (
-              <div key={childYear} className="flex items-center mb-1">
-                <div className="w-16 text-xs font-medium text-right pr-2">
-                  {childYear === -1 ? 'No child' : `Year ${childYear}`}
-                </div>
-                <div className="flex-1 flex">
-                  {retirementYears.map((retYear, retIndex) => {
-                    const cell = heatmapData[retIndex][childIndex];
-                    const isSelected = selectedCell?.retIndex === retIndex && selectedCell?.childIndex === childIndex;
-                    return (
-                      <div
-                        key={retYear}
-                        className={`flex-1 h-8 cursor-pointer border ${isSelected ? 'border-2 border-blue-600' : 'border-gray-200'}`}
-                        style={{ backgroundColor: getColor(cell.metric) }}
-                        onClick={() => setSelectedCell({retIndex, childIndex})}
-                        title={`Retire: ${retYear}, Child: ${childYear === -1 ? 'none' : childYear}\nMetric: ${cell.metric.toFixed(0)}`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-            <div className="flex items-center mt-2">
-              <div className="w-16"></div>
-              <div className="flex-1">
-                <div className="text-xs text-gray-500">← Child Birth Year</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SVGHeatmap
+          data={heatmapData}
+          retirementYears={retirementYears}
+          childBirthYears={childBirthYears}
+          getColor={getColor}
+          selectedCell={selectedCell}
+          onCellClick={(retYear, childYear) => {
+            setSelectedCell({ retirementYear: retYear, childBirthYear: childYear });
+          }}
+        />
       </div>
 
       {selectedCellData && (
