@@ -235,8 +235,7 @@ const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selected
 };
 
 const FIRECalculator = () => {
-  const [mode, setMode] = useState('simple'); // 'simple' | 'advanced'
-  const [inputs, setInputs] = useState({
+  const defaultInputs = {
     workingIncome: 200000,
     retiredIncome: 0,
     baseSpending: 65000,
@@ -247,9 +246,62 @@ const FIRECalculator = () => {
     city: 'nyc',
     returnRate: 7,
     includeChild: false,
-  });
+  };
 
+  // Read from URL params on mount
+  const getInitialState = () => {
+    if (typeof window === 'undefined') return { mode: 'simple', inputs: defaultInputs };
+
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode') || 'simple';
+
+    const inputs = {
+      workingIncome: Number(params.get('wi')) || defaultInputs.workingIncome,
+      retiredIncome: Number(params.get('ri')) || defaultInputs.retiredIncome,
+      baseSpending: Number(params.get('bs')) || defaultInputs.baseSpending,
+      retirementYear: Number(params.get('ry')) || defaultInputs.retirementYear,
+      childBirthYear: Number(params.get('cb')) || defaultInputs.childBirthYear,
+      filingStatus: params.get('fs') || defaultInputs.filingStatus,
+      state: params.get('st') || defaultInputs.state,
+      city: params.get('ct') || defaultInputs.city,
+      returnRate: Number(params.get('rr')) || defaultInputs.returnRate,
+      includeChild: params.get('ic') === 'true' || defaultInputs.includeChild,
+    };
+
+    return { mode, inputs };
+  };
+
+  const initialState = getInitialState();
+  const [mode, setMode] = useState(initialState.mode);
+  const [inputs, setInputs] = useState(initialState.inputs);
   const [selectedCell, setSelectedCell] = useState(null);
+
+  // Update URL when state changes
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams();
+    params.set('mode', mode);
+    params.set('wi', inputs.workingIncome);
+    params.set('ri', inputs.retiredIncome);
+    params.set('bs', inputs.baseSpending);
+    params.set('ry', inputs.retirementYear);
+    params.set('cb', inputs.childBirthYear);
+    params.set('fs', inputs.filingStatus);
+    params.set('st', inputs.state);
+    params.set('ct', inputs.city);
+    params.set('rr', inputs.returnRate);
+    params.set('ic', inputs.includeChild);
+
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [mode, inputs]);
+
+  const resetToDefaults = () => {
+    setInputs(defaultInputs);
+    setMode('simple');
+    setSelectedCell(null);
+  };
 
   const calculateTaxes = (income, filingStatus, state, city) => {
     const standardDeduction = filingStatus === 'married' ? 29200 : 14600;
@@ -438,7 +490,15 @@ const FIRECalculator = () => {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-6 bg-white">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">FIRE Calculator MVP</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">FIRE Calculator MVP</h1>
+        <button
+          onClick={resetToDefaults}
+          className="text-xs text-gray-500 hover:text-gray-700 underline"
+        >
+          Reset to defaults
+        </button>
+      </div>
 
       {/* Mode Toggle */}
       <div className="mb-6 flex gap-2">
