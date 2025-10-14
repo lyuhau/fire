@@ -193,6 +193,7 @@ const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selected
 };
 
 const FIRECalculator = () => {
+  const [mode, setMode] = useState('simple'); // 'simple' | 'advanced'
   const [inputs, setInputs] = useState({
     workingIncome: 200000,
     retiredIncome: 0,
@@ -331,9 +332,20 @@ const FIRECalculator = () => {
     return results;
   };
 
-  const allResults = calculateYearByYear(inputs.retirementYear, inputs.childBirthYear, inputs.includeChild);
+  // Determine which scenario to display based on mode and selection
+  const displayRetirementYear = mode === 'advanced' && selectedCell
+    ? selectedCell.retirementYear
+    : inputs.retirementYear;
+  const displayChildBirthYear = mode === 'advanced' && selectedCell
+    ? selectedCell.childBirthYear
+    : inputs.childBirthYear;
+  const displayIncludeChild = mode === 'advanced' && selectedCell
+    ? selectedCell.childBirthYear >= 0
+    : inputs.includeChild;
+
+  const allResults = calculateYearByYear(displayRetirementYear, displayChildBirthYear, displayIncludeChild);
   const chartData = allResults.slice(0, 35);
-  const retirementYear = allResults.find(r => r.year === inputs.retirementYear);
+  const retirementYear = allResults.find(r => r.year === displayRetirementYear);
   const portfolioRunsOut = allResults.some(r => r.isRetired && r.portfolio < 0);
   const yearRunsOut = portfolioRunsOut ? allResults.find(r => r.portfolio < 0)?.year : null;
 
@@ -382,20 +394,34 @@ const FIRECalculator = () => {
     }
   };
 
-  // Calculate selected cell data on-demand
-  const selectedCellData = selectedCell ? {
-    ...selectedCell,
-    results: calculateYearByYear(selectedCell.retirementYear, selectedCell.childBirthYear, selectedCell.childBirthYear >= 0),
-    metric: heatmapData.find(d =>
-      d.retirementYear === selectedCell.retirementYear &&
-      d.childBirthYear === selectedCell.childBirthYear
-    )?.metric
-  } : null;
-
   return (
     <div className="w-full max-w-7xl mx-auto p-6 bg-white">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">FIRE Calculator MVP</h1>
-      
+
+      {/* Mode Toggle */}
+      <div className="mb-6 flex gap-2">
+        <button
+          onClick={() => setMode('simple')}
+          className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+            mode === 'simple'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Simple Mode
+        </button>
+        <button
+          onClick={() => setMode('advanced')}
+          className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+            mode === 'advanced'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Advanced Mode (Grid Explorer)
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 bg-gray-50 p-6 rounded-lg">
         <div>
           <label className="block text-sm font-medium mb-1">Working Income</label>
@@ -427,15 +453,27 @@ const FIRECalculator = () => {
           />
         </div>
         
-        <div>
-          <label className="block text-sm font-medium mb-1">Retirement Year</label>
-          <input
-            type="number"
-            value={inputs.retirementYear}
-            onChange={(e) => setInputs({...inputs, retirementYear: Number(e.target.value)})}
-            className="w-full p-2 border rounded"
-          />
-        </div>
+        {mode === 'simple' && (
+          <div>
+            <label className="block text-sm font-medium mb-1">Retirement Year</label>
+            <input
+              type="number"
+              value={inputs.retirementYear}
+              onChange={(e) => setInputs({...inputs, retirementYear: Number(e.target.value)})}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        )}
+
+        {mode === 'advanced' && (
+          <div className="bg-gray-100 p-3 rounded">
+            <label className="block text-sm font-medium mb-1 text-gray-600">Retirement Year</label>
+            <div className="text-sm text-gray-500 italic">Controlled by grid selection</div>
+            <div className="text-lg font-semibold text-gray-700 mt-1">
+              {selectedCell ? selectedCell.retirementYear : inputs.retirementYear}
+            </div>
+          </div>
+        )}
         
         <div>
           <label className="block text-sm font-medium mb-1">Filing Status</label>
@@ -483,32 +521,49 @@ const FIRECalculator = () => {
           />
         </div>
         
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            checked={inputs.includeChild}
-            onChange={(e) => setInputs({...inputs, includeChild: e.target.checked})}
-            className="mr-2"
-          />
-          <label className="text-sm font-medium">Include Child</label>
-        </div>
-        
-        {inputs.includeChild && (
-          <div>
-            <label className="block text-sm font-medium mb-1">Child Birth Year</label>
-            <input
-              type="number"
-              value={inputs.childBirthYear}
-              onChange={(e) => setInputs({...inputs, childBirthYear: Number(e.target.value)})}
-              className="w-full p-2 border rounded"
-            />
+        {mode === 'simple' && (
+          <>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={inputs.includeChild}
+                onChange={(e) => setInputs({...inputs, includeChild: e.target.checked})}
+                className="mr-2"
+              />
+              <label className="text-sm font-medium">Include Child</label>
+            </div>
+
+            {inputs.includeChild && (
+              <div>
+                <label className="block text-sm font-medium mb-1">Child Birth Year</label>
+                <input
+                  type="number"
+                  value={inputs.childBirthYear}
+                  onChange={(e) => setInputs({...inputs, childBirthYear: Number(e.target.value)})}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {mode === 'advanced' && (
+          <div className="bg-gray-100 p-3 rounded">
+            <label className="block text-sm font-medium mb-1 text-gray-600">Child Birth Year</label>
+            <div className="text-sm text-gray-500 italic">Controlled by grid selection</div>
+            <div className="text-lg font-semibold text-gray-700 mt-1">
+              {selectedCell
+                ? (selectedCell.childBirthYear === -1 ? 'None' : selectedCell.childBirthYear)
+                : (inputs.includeChild ? inputs.childBirthYear : 'None')
+              }
+            </div>
           </div>
         )}
       </div>
 
       {retirementYear && (
         <div className="mb-8 p-4 bg-blue-50 rounded-lg">
-          <h2 className="text-xl font-semibold mb-2">At Retirement (Year {inputs.retirementYear})</h2>
+          <h2 className="text-xl font-semibold mb-2">At Retirement (Year {displayRetirementYear})</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <div className="text-sm text-gray-600">Portfolio Value</div>
@@ -550,49 +605,35 @@ const FIRECalculator = () => {
         </div>
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Scenario Explorer: Retirement Year vs Child Birth Year</h2>
-        <div className="text-sm text-gray-600 mb-4">
-          Click any cell to see detailed year-by-year breakdown. Colors show sustainability (continuous gradient):
-          <span className="ml-2">🔴 Runs out quickly</span>
-          <span className="ml-2">→ 🟡 Marginal →</span>
-          <span className="ml-2">🟢 Sustainable</span>
-        </div>
-        <SVGHeatmap
-          data={heatmapData}
-          retirementYears={retirementYears}
-          childBirthYears={childBirthYears}
-          getColor={getColor}
-          selectedCell={selectedCell}
-          onCellClick={(retYear, childYear) => {
-            setSelectedCell({ retirementYear: retYear, childBirthYear: childYear });
-          }}
-        />
-      </div>
-
-      {selectedCellData && (
-        <div className="mb-8 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-400">
-          <h3 className="text-lg font-semibold mb-2">
-            Selected Scenario: Retire Year {selectedCellData.retirementYear}, 
-            Child {selectedCellData.childBirthYear === -1 ? 'None' : `Year ${selectedCellData.childBirthYear}`}
-          </h3>
-          <div className="text-sm">
-            <strong>Sustainability:</strong> {
-              selectedCellData.metric < 100 
-                ? `❌ Runs out at year ${selectedCellData.metric.toFixed(0)}`
-                : `✅ Sustainable (${selectedCellData.metric.toFixed(0)} years worth at year 100)`
-            }
+      {mode === 'advanced' && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Scenario Explorer: Retirement Year vs Child Birth Year</h2>
+          <div className="text-sm text-gray-600 mb-4">
+            Click any cell to see detailed year-by-year breakdown. Colors show sustainability (continuous gradient):
+            <span className="ml-2">🔴 Runs out quickly</span>
+            <span className="ml-2">→ 🟡 Marginal →</span>
+            <span className="ml-2">🟢 Sustainable</span>
           </div>
+          <SVGHeatmap
+            data={heatmapData}
+            retirementYears={retirementYears}
+            childBirthYears={childBirthYears}
+            getColor={getColor}
+            selectedCell={selectedCell}
+            onCellClick={(retYear, childYear) => {
+              setSelectedCell({ retirementYear: retYear, childBirthYear: childYear });
+            }}
+          />
         </div>
       )}
 
       <div className="overflow-x-auto">
         <h2 className="text-xl font-semibold mb-4">
-          Year-by-Year Details 
-          {selectedCellData && (
+          Year-by-Year Details
+          {mode === 'advanced' && selectedCell && (
             <span className="text-base font-normal text-gray-600 ml-2">
-              (Showing selected scenario: Retire {selectedCellData.retirementYear}, 
-              Child {selectedCellData.childBirthYear === -1 ? 'None' : selectedCellData.childBirthYear})
+              (Showing: Retire Year {selectedCell.retirementYear},
+              Child {selectedCell.childBirthYear === -1 ? 'None' : `Year ${selectedCell.childBirthYear}`})
             </span>
           )}
         </h2>
@@ -612,7 +653,7 @@ const FIRECalculator = () => {
             </tr>
           </thead>
           <tbody>
-            {(selectedCellData?.results || allResults).map((row) => (
+            {allResults.map((row) => (
               <tr key={row.year} className={row.isRetired ? 'bg-blue-50' : row.portfolio < 0 ? 'bg-red-50' : ''}>
                 <td className="border p-2 text-center">{row.year}</td>
                 <td className="border p-2 text-center">
