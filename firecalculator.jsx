@@ -241,12 +241,15 @@ const FIRECalculator = () => {
     baseSpending: 65000,
     initialPortfolio: 0,
     retirementYear: 15,
-    childBirthYear: 0,
+    numberOfChildren: 0,
+    childBirthYears: [],
+    childSpacing: 3,
+    childCostScale: 1.0,
+    privateCollege: false,
     filingStatus: 'single',
     state: 'ny',
     city: 'nyc',
     returnRate: 7,
-    includeChild: false,
   };
 
   // Read from URL params on mount
@@ -256,18 +259,27 @@ const FIRECalculator = () => {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode') || 'simple';
 
+    const numberOfChildren = Number(params.get('nc')) || defaultInputs.numberOfChildren;
+    const childBirthYearsParam = params.get('cb');
+    const childBirthYears = childBirthYearsParam
+      ? childBirthYearsParam.split(',').map(Number)
+      : defaultInputs.childBirthYears;
+
     const inputs = {
       workingIncome: Number(params.get('wi')) || defaultInputs.workingIncome,
       retiredIncome: Number(params.get('ri')) || defaultInputs.retiredIncome,
       baseSpending: Number(params.get('bs')) || defaultInputs.baseSpending,
       initialPortfolio: Number(params.get('ip')) || defaultInputs.initialPortfolio,
       retirementYear: Number(params.get('ry')) || defaultInputs.retirementYear,
-      childBirthYear: Number(params.get('cb')) || defaultInputs.childBirthYear,
+      numberOfChildren,
+      childBirthYears,
+      childSpacing: Number(params.get('sp')) || defaultInputs.childSpacing,
+      childCostScale: Number(params.get('cs')) || defaultInputs.childCostScale,
+      privateCollege: params.get('pc') === 'true' || defaultInputs.privateCollege,
       filingStatus: params.get('fs') || defaultInputs.filingStatus,
       state: params.get('st') || defaultInputs.state,
       city: params.get('ct') || defaultInputs.city,
       returnRate: Number(params.get('rr')) || defaultInputs.returnRate,
-      includeChild: params.get('ic') === 'true' || defaultInputs.includeChild,
     };
 
     return { mode, inputs };
@@ -289,12 +301,15 @@ const FIRECalculator = () => {
     params.set('bs', inputs.baseSpending);
     params.set('ip', inputs.initialPortfolio);
     params.set('ry', inputs.retirementYear);
-    params.set('cb', inputs.childBirthYear);
+    params.set('nc', inputs.numberOfChildren);
+    params.set('cb', inputs.childBirthYears.join(','));
+    params.set('sp', inputs.childSpacing);
+    params.set('cs', inputs.childCostScale);
+    params.set('pc', inputs.privateCollege);
     params.set('fs', inputs.filingStatus);
     params.set('st', inputs.state);
     params.set('ct', inputs.city);
     params.set('rr', inputs.returnRate);
-    params.set('ic', inputs.includeChild);
 
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', newUrl);
@@ -304,6 +319,32 @@ const FIRECalculator = () => {
     setInputs(defaultInputs);
     setMode('simple');
     setSelectedCell(null);
+  };
+
+  // Helper to update number of children and adjust birth years array
+  const updateNumberOfChildren = (newCount) => {
+    const currentYears = inputs.childBirthYears;
+    let newYears = [...currentYears];
+
+    if (newCount > currentYears.length) {
+      // Add new children - use last child's year + spacing or default to 0
+      const lastYear = currentYears.length > 0 ? currentYears[currentYears.length - 1] : -inputs.childSpacing;
+      for (let i = currentYears.length; i < newCount; i++) {
+        newYears.push(lastYear + inputs.childSpacing * (i - currentYears.length + 1));
+      }
+    } else if (newCount < currentYears.length) {
+      // Remove children from the end
+      newYears = currentYears.slice(0, newCount);
+    }
+
+    setInputs({...inputs, numberOfChildren: newCount, childBirthYears: newYears});
+  };
+
+  // Helper to update a specific child's birth year
+  const updateChildBirthYear = (index, year) => {
+    const newYears = [...inputs.childBirthYears];
+    newYears[index] = year;
+    setInputs({...inputs, childBirthYears: newYears});
   };
 
   const calculateTaxes = (income, filingStatus, state, city) => {
@@ -383,49 +424,76 @@ const FIRECalculator = () => {
     };
   };
 
-  const getChildCost = (childAge) => {
+  const getChildCost = (childAge, costScale, privateCollege) => {
     if (childAge < 0 || childAge > 22) return 0;
-    if (childAge >= 18 && childAge <= 21) return 50000;
-    if (childAge < 5) return 20000;
-    return 15000;
+
+    let baseCost;
+    if (childAge >= 18 && childAge <= 21) {
+      // College years
+      baseCost = privateCollege ? 80000 : 50000;
+    } else if (childAge < 5) {
+      baseCost = 20000;
+    } else {
+      baseCost = 15000;
+    }
+
+    return baseCost * costScale;
   };
 
-  const calculateYearByYear = (retirementYear, childBirthYear, includeChild) => {
+  // Helper to generate child birth years for Advanced mode
+  const generateChildYears = (firstChild, count, spacing) => {
+    if (count === 0 || firstChild === -1) return [];
+    return Array.from({length: count}, (_, i) => firstChild + i * spacing);
+  };
+
+  const calculateYearByYear = (retirementYear, childBirthYears) => {
     const results = [];
     let portfolio = inputs.initialPortfolio;
     const returnMultiplier = 1 + inputs.returnRate / 100;
     const max401k = 23500;
     const maxHSA = 4300;
     const maxIRA = 7000;
-    
+
     for (let year = 1; year <= 100; year++) {
       const isRetired = year > retirementYear;
       const income = isRetired ? inputs.retiredIncome : inputs.workingIncome;
       const preTaxContributions = isRetired ? 0 : max401k + maxHSA;
-      const childAge = includeChild ? year - childBirthYear : -1;
-      const childCost = getChildCost(childAge);
-      const totalSpending = inputs.baseSpending + childCost;
+
+      // Calculate total child costs from all children
+      let totalChildCost = 0;
+      const activeChildren = [];
+      childBirthYears.forEach(birthYear => {
+        const childAge = year - birthYear;
+        const cost = getChildCost(childAge, inputs.childCostScale, inputs.privateCollege);
+        if (cost > 0) {
+          totalChildCost += cost;
+          activeChildren.push(childAge);
+        }
+      });
+
+      const totalSpending = inputs.baseSpending + totalChildCost;
       const taxableIncome = income - preTaxContributions;
       const taxes = calculateTaxes(taxableIncome, inputs.filingStatus, inputs.state, inputs.city);
       const iraContribution = isRetired ? 0 : maxIRA;
       const netSavings = income - preTaxContributions - taxes.total - iraContribution - totalSpending;
       portfolio = portfolio * returnMultiplier + netSavings + preTaxContributions + iraContribution;
-      
+
       results.push({
         year,
         income,
         preTaxContributions,
         spending: totalSpending,
-        childCost,
+        childCost: totalChildCost,
         taxes: Math.round(taxes.total),
         iraContribution,
         netSavings: Math.round(netSavings),
         portfolio: Math.round(portfolio),
         isRetired,
-        childAge: childAge >= 0 ? childAge : null,
+        childAge: activeChildren.length > 0 ? activeChildren[0] : null, // Show first child for backward compat
+        activeChildren, // Array of all active child ages
       });
     }
-    
+
     return results;
   };
 
@@ -433,14 +501,19 @@ const FIRECalculator = () => {
   const displayRetirementYear = mode === 'advanced' && selectedCell
     ? selectedCell.retirementYear
     : inputs.retirementYear;
-  const displayChildBirthYear = mode === 'advanced' && selectedCell
-    ? selectedCell.childBirthYear
-    : inputs.childBirthYear;
-  const displayIncludeChild = mode === 'advanced' && selectedCell
-    ? selectedCell.childBirthYear >= 0
-    : inputs.includeChild;
 
-  const allResults = calculateYearByYear(displayRetirementYear, displayChildBirthYear, displayIncludeChild);
+  // Determine child birth years based on mode
+  let displayChildBirthYears;
+  if (mode === 'advanced' && selectedCell) {
+    // Advanced mode with grid selection: generate array from first child + spacing
+    const firstChild = selectedCell.childBirthYear;
+    displayChildBirthYears = generateChildYears(firstChild, inputs.numberOfChildren, inputs.childSpacing);
+  } else {
+    // Simple mode: use the stored array
+    displayChildBirthYears = inputs.childBirthYears;
+  }
+
+  const allResults = calculateYearByYear(displayRetirementYear, displayChildBirthYears);
   const chartData = allResults.slice(0, 35);
   const retirementYear = allResults.find(r => r.year === displayRetirementYear);
   const portfolioRunsOut = allResults.some(r => r.isRetired && r.portfolio < 0);
@@ -465,7 +538,9 @@ const FIRECalculator = () => {
   const heatmapData = [];
   retirementYears.forEach(retYear => {
     childBirthYears.forEach(childYear => {
-      const results = calculateYearByYear(retYear, childYear, childYear >= 0);
+      // Generate child birth years array for this grid cell
+      const cellChildBirthYears = generateChildYears(childYear, inputs.numberOfChildren, inputs.childSpacing);
+      const results = calculateYearByYear(retYear, cellChildBirthYears);
       const metric = getSustainabilityMetric(results);
       heatmapData.push({
         retirementYear: retYear,
@@ -644,43 +719,131 @@ const FIRECalculator = () => {
         
         {mode === 'simple' && (
           <>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={inputs.includeChild}
-                onChange={(e) => setInputs({...inputs, includeChild: e.target.checked})}
-                className="mr-2"
-              />
-              <label className="text-sm font-medium">Include Child</label>
+            <div>
+              <label className="block text-xs font-medium mb-1">Number of Children</label>
+              <select
+                value={inputs.numberOfChildren}
+                onChange={(e) => updateNumberOfChildren(Number(e.target.value))}
+                className="w-full p-1.5 border rounded text-sm"
+              >
+                {[0, 1, 2, 3, 4, 5].map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
             </div>
 
-            {inputs.includeChild && (
-              <div>
-                <label className="block text-xs font-medium mb-1">Child Birth Year</label>
-                <input
-                  type="number"
-                  value={inputs.childBirthYear}
-                  onChange={(e) => setInputs({...inputs, childBirthYear: Number(e.target.value)})}
-                  className="w-full p-1.5 border rounded text-sm"
-                />
-              </div>
+            {inputs.numberOfChildren > 0 && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Cost Level</label>
+                  <select
+                    value={inputs.childCostScale}
+                    onChange={(e) => setInputs({...inputs, childCostScale: Number(e.target.value)})}
+                    className="w-full p-1.5 border rounded text-sm"
+                  >
+                    <option value={0.5}>Minimal</option>
+                    <option value={0.75}>Basic</option>
+                    <option value={1.0}>Standard</option>
+                    <option value={1.5}>Comfortable</option>
+                    <option value={2.0}>Premium</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={inputs.privateCollege}
+                    onChange={(e) => setInputs({...inputs, privateCollege: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <label className="text-xs font-medium">Private College</label>
+                </div>
+
+                {inputs.childBirthYears.map((year, index) => (
+                  <div key={index}>
+                    <label className="block text-xs font-medium mb-1">Child {index + 1} Birth Year</label>
+                    <input
+                      type="number"
+                      value={year}
+                      onChange={(e) => updateChildBirthYear(index, Number(e.target.value))}
+                      className="w-full p-1.5 border rounded text-sm"
+                    />
+                  </div>
+                ))}
+              </>
             )}
           </>
         )}
 
         {mode === 'advanced' && (
-          <div className="bg-gray-100 p-2 rounded">
-            <div className="flex items-center justify-between mb-0.5">
-              <label className="text-xs font-medium text-gray-600">Child Birth Year</label>
-              <span className="text-xs text-gray-500 italic">Grid controlled</span>
+          <>
+            <div>
+              <label className="block text-xs font-medium mb-1">Number of Children</label>
+              <select
+                value={inputs.numberOfChildren}
+                onChange={(e) => updateNumberOfChildren(Number(e.target.value))}
+                className="w-full p-1.5 border rounded text-sm"
+              >
+                {[0, 1, 2, 3, 4, 5].map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
             </div>
-            <div className="text-base font-semibold text-gray-700">
-              {selectedCell
-                ? (selectedCell.childBirthYear === -1 ? 'None' : selectedCell.childBirthYear)
-                : (inputs.includeChild ? inputs.childBirthYear : 'None')
-              }
-            </div>
-          </div>
+
+            {inputs.numberOfChildren > 0 && (
+              <>
+                <div className="bg-gray-100 p-2 rounded">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="text-xs font-medium text-gray-600">First Child Year</label>
+                    <span className="text-xs text-gray-500 italic">Grid controlled</span>
+                  </div>
+                  <div className="text-base font-semibold text-gray-700">
+                    {selectedCell
+                      ? (selectedCell.childBirthYear === -1 ? 'None' : selectedCell.childBirthYear)
+                      : (inputs.childBirthYears.length > 0 ? inputs.childBirthYears[0] : 0)
+                    }
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1">Child Spacing (years)</label>
+                  <input
+                    type="number"
+                    value={inputs.childSpacing}
+                    onChange={(e) => setInputs({...inputs, childSpacing: Number(e.target.value)})}
+                    className="w-full p-1.5 border rounded text-sm"
+                    min="1"
+                    max="10"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1">Cost Level</label>
+                  <select
+                    value={inputs.childCostScale}
+                    onChange={(e) => setInputs({...inputs, childCostScale: Number(e.target.value)})}
+                    className="w-full p-1.5 border rounded text-sm"
+                  >
+                    <option value={0.5}>Minimal</option>
+                    <option value={0.75}>Basic</option>
+                    <option value={1.0}>Standard</option>
+                    <option value={1.5}>Comfortable</option>
+                    <option value={2.0}>Premium</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={inputs.privateCollege}
+                    onChange={(e) => setInputs({...inputs, privateCollege: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <label className="text-xs font-medium">Private College</label>
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
 
