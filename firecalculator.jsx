@@ -440,7 +440,7 @@ const FIRECalculator = () => {
     return baseCost * costScale;
   };
 
-  // Helper to generate child birth years for Advanced mode
+  // Helper to generate child birth years for Scenario Explorer mode
   const generateChildYears = (firstChild, count, spacing) => {
     if (count === 0 || firstChild === -1) return [];
     return Array.from({length: count}, (_, i) => firstChild + i * spacing);
@@ -505,7 +505,7 @@ const FIRECalculator = () => {
   // Determine child birth years based on mode
   let displayChildBirthYears;
   if (mode === 'advanced' && selectedCell) {
-    // Advanced mode with grid selection: generate array from first child + spacing
+    // Scenario Explorer mode with grid selection: generate array from first child + spacing
     const firstChild = selectedCell.childBirthYear;
     displayChildBirthYears = generateChildYears(firstChild, inputs.numberOfChildren, inputs.childSpacing);
   } else {
@@ -598,7 +598,7 @@ const FIRECalculator = () => {
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          Advanced Mode (Grid Explorer)
+          Scenario Explorer
         </button>
       </div>
 
@@ -733,7 +733,7 @@ const FIRECalculator = () => {
           </div>
         )}
 
-        {/* Timeline - Advanced mode */}
+        {/* Timeline - Scenario Explorer mode */}
         {mode === 'advanced' && (
           <div className="bg-gray-100 p-2 rounded">
             <div className="flex items-center justify-between mb-0.5">
@@ -919,7 +919,7 @@ const FIRECalculator = () => {
           </div>
         </>
       ) : (
-        // Advanced mode: side-by-side layout
+        // Scenario Explorer mode: side-by-side layout with grid
         <div className="mb-6 flex gap-4">
           <div className="flex-shrink-0">
             <h2 className="text-base font-semibold mb-1">Scenario Explorer</h2>
@@ -980,7 +980,7 @@ const FIRECalculator = () => {
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <div>
         <h2 className="text-xl font-semibold mb-4">
           Year-by-Year Details
           {mode === 'advanced' && selectedCell && (
@@ -990,45 +990,47 @@ const FIRECalculator = () => {
             </span>
           )}
         </h2>
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2">Year</th>
-              <th className="border p-2">Status</th>
-              <th className="border p-2">Income</th>
-              <th className="border p-2">Pre-Tax</th>
-              <th className="border p-2">Spending</th>
-              <th className="border p-2">Child Cost</th>
-              <th className="border p-2">Taxes</th>
-              <th className="border p-2">IRA</th>
-              <th className="border p-2">Net Savings</th>
-              <th className="border p-2">Portfolio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {allResults.map((row) => (
-              <tr key={row.year} className={row.isRetired ? 'bg-blue-50' : row.portfolio < 0 ? 'bg-red-50' : ''}>
-                <td className="border p-2 text-center">{row.year}</td>
-                <td className="border p-2 text-center">
-                  {row.isRetired ? '🏖️' : '💼'}
-                  {row.childAge !== null && ` 👶${row.childAge}`}
-                </td>
-                <td className="border p-2 text-right">${row.income.toLocaleString()}</td>
-                <td className="border p-2 text-right">${row.preTaxContributions.toLocaleString()}</td>
-                <td className="border p-2 text-right">${row.spending.toLocaleString()}</td>
-                <td className="border p-2 text-right">${row.childCost.toLocaleString()}</td>
-                <td className="border p-2 text-right">${row.taxes.toLocaleString()}</td>
-                <td className="border p-2 text-right">${row.iraContribution.toLocaleString()}</td>
-                <td className={`border p-2 text-right ${row.netSavings < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  ${row.netSavings.toLocaleString()}
-                </td>
-                <td className={`border p-2 text-right font-semibold ${row.portfolio < 0 ? 'text-red-600' : ''}`}>
-                  ${row.portfolio.toLocaleString()}
-                </td>
+        <div className="overflow-x-auto overflow-y-auto max-h-96 border border-gray-300 rounded">
+          <table className="w-full text-sm border-collapse">
+            <thead className="sticky top-0 bg-gray-100 z-10">
+              <tr>
+                <th className="border p-2">Year</th>
+                <th className="border p-2">Status</th>
+                <th className="border p-2">Income</th>
+                <th className="border p-2">Pre-Tax</th>
+                <th className="border p-2">Spending</th>
+                <th className="border p-2">Child Cost</th>
+                <th className="border p-2">Taxes</th>
+                <th className="border p-2">IRA</th>
+                <th className="border p-2">Net Savings</th>
+                <th className="border p-2">Portfolio</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {allResults.map((row) => (
+                <tr key={row.year} className={row.isRetired ? 'bg-blue-50' : row.portfolio < 0 ? 'bg-red-50' : ''}>
+                  <td className="border p-2 text-center">{row.year}</td>
+                  <td className="border p-2 text-center">
+                    {row.isRetired ? '🏖️' : '💼'}
+                    {row.childAge !== null && ` 👶${row.childAge}`}
+                  </td>
+                  <td className="border p-2 text-right">${row.income.toLocaleString()}</td>
+                  <td className="border p-2 text-right">${row.preTaxContributions.toLocaleString()}</td>
+                  <td className="border p-2 text-right">${row.spending.toLocaleString()}</td>
+                  <td className="border p-2 text-right">${row.childCost.toLocaleString()}</td>
+                  <td className="border p-2 text-right">${row.taxes.toLocaleString()}</td>
+                  <td className="border p-2 text-right">${row.iraContribution.toLocaleString()}</td>
+                  <td className={`border p-2 text-right ${row.netSavings < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    ${row.netSavings.toLocaleString()}
+                  </td>
+                  <td className={`border p-2 text-right font-semibold ${row.portfolio < 0 ? 'text-red-600' : ''}`}>
+                    ${row.portfolio.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="mt-6 text-sm text-gray-600">
