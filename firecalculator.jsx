@@ -602,7 +602,15 @@ const FIRECalculator = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6 bg-gray-50 p-4 rounded-lg text-sm">
+      <div className="grid grid-cols-5 gap-3 mb-6 bg-gray-50 p-4 rounded-lg text-sm">
+        {/* Income + Spending */}
+        <div className="col-span-2 text-xs font-bold text-gray-800 uppercase tracking-wide mt-0 mb-1 pb-1 border-b-2 border-gray-500">
+          Income
+        </div>
+        <div className="col-span-3 text-xs font-bold text-gray-800 uppercase tracking-wide mt-0 mb-1 pb-1 border-b-2 border-gray-500">
+          Spending
+        </div>
+
         <div>
           <label className="block text-xs font-medium mb-1">Working Income</label>
           <input
@@ -636,6 +644,18 @@ const FIRECalculator = () => {
           />
         </div>
 
+        {/* Empty spacers to complete the row */}
+        <div></div>
+        <div></div>
+
+        {/* Portfolio + Taxes */}
+        <div className="col-span-2 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500">
+          Portfolio
+        </div>
+        <div className="col-span-3 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500">
+          Taxes
+        </div>
+
         <div>
           <label className="block text-xs font-medium mb-1">Initial Portfolio</label>
           <input
@@ -647,6 +667,60 @@ const FIRECalculator = () => {
           />
         </div>
 
+        <div>
+          <label className="block text-xs font-medium mb-1">Return Rate (% real)</label>
+          <input
+            type="number"
+            value={inputs.returnRate}
+            onChange={(e) => setInputs({...inputs, returnRate: Number(e.target.value)})}
+            className="w-full p-1.5 border rounded text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1">Filing Status</label>
+          <select
+            value={inputs.filingStatus}
+            onChange={(e) => setInputs({...inputs, filingStatus: e.target.value})}
+            className="w-full p-1.5 border rounded text-sm"
+          >
+            <option value="single">Single</option>
+            <option value="married">Married</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1">State</label>
+          <select
+            value={inputs.state}
+            onChange={(e) => setInputs({...inputs, state: e.target.value})}
+            className="w-full p-1.5 border rounded text-sm"
+          >
+            <option value="ny">New York</option>
+            <option value="none">No State Tax</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1">City</label>
+          <select
+            value={inputs.city}
+            onChange={(e) => setInputs({...inputs, city: e.target.value})}
+            className="w-full p-1.5 border rounded text-sm"
+          >
+            <option value="nyc">NYC</option>
+            <option value="none">No City Tax</option>
+          </select>
+        </div>
+
+        {/* Timeline + Children */}
+        <div className="col-span-1 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500">
+          Timeline
+        </div>
+        <div className="col-span-4 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500">
+          Children
+        </div>
+        {/* Timeline - Simple mode */}
         {mode === 'simple' && (
           <div>
             <label className="block text-xs font-medium mb-1">Retirement Year</label>
@@ -659,6 +733,7 @@ const FIRECalculator = () => {
           </div>
         )}
 
+        {/* Timeline - Advanced mode */}
         {mode === 'advanced' && (
           <div className="bg-gray-100 p-2 rounded">
             <div className="flex items-center justify-between mb-0.5">
@@ -670,53 +745,8 @@ const FIRECalculator = () => {
             </div>
           </div>
         )}
-        
-        <div>
-          <label className="block text-xs font-medium mb-1">Filing Status</label>
-          <select
-            value={inputs.filingStatus}
-            onChange={(e) => setInputs({...inputs, filingStatus: e.target.value})}
-            className="w-full p-1.5 border rounded text-sm"
-          >
-            <option value="single">Single</option>
-            <option value="married">Married</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-xs font-medium mb-1">State</label>
-          <select
-            value={inputs.state}
-            onChange={(e) => setInputs({...inputs, state: e.target.value})}
-            className="w-full p-1.5 border rounded text-sm"
-          >
-            <option value="ny">New York</option>
-            <option value="none">No State Tax</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-xs font-medium mb-1">City</label>
-          <select
-            value={inputs.city}
-            onChange={(e) => setInputs({...inputs, city: e.target.value})}
-            className="w-full p-1.5 border rounded text-sm"
-          >
-            <option value="nyc">NYC</option>
-            <option value="none">No City Tax</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-xs font-medium mb-1">Return Rate (% real)</label>
-          <input
-            type="number"
-            value={inputs.returnRate}
-            onChange={(e) => setInputs({...inputs, returnRate: Number(e.target.value)})}
-            className="w-full p-1.5 border rounded text-sm"
-          />
-        </div>
-        
+
+        {/* Children - Simple mode */}
         {mode === 'simple' && (
           <>
             <div>
@@ -1005,7 +1035,7 @@ const FIRECalculator = () => {
         <p><strong>Note:</strong> This is a pure simulation - no withdrawal rate assumptions.</p>
         <ul className="list-disc ml-6 mt-2">
           <li>401(k): $23,500/year, HSA: $4,300/year, IRA: $7,000/year (2025 limits)</li>
-          <li>Child costs: $20k (age 0-4), $15k (age 5-17), $50k (college, age 18-21)</li>
+          <li>Child costs: $20k (age 0-4), $15k (age 5-17), $50k state/$80k private (college, age 18-21), scalable by lifestyle level</li>
           <li>Real returns (after inflation): {inputs.returnRate}%</li>
           <li>All values in "today's dollars" - inflation-adjusted throughout</li>
           <li>Portfolio continues to grow/shrink based on returns vs. spending</li>
