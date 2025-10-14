@@ -239,6 +239,7 @@ const FIRECalculator = () => {
     workingIncome: 200000,
     retiredIncome: 0,
     baseSpending: 65000,
+    initialPortfolio: 0,
     retirementYear: 15,
     childBirthYear: 0,
     filingStatus: 'single',
@@ -259,6 +260,7 @@ const FIRECalculator = () => {
       workingIncome: Number(params.get('wi')) || defaultInputs.workingIncome,
       retiredIncome: Number(params.get('ri')) || defaultInputs.retiredIncome,
       baseSpending: Number(params.get('bs')) || defaultInputs.baseSpending,
+      initialPortfolio: Number(params.get('ip')) || defaultInputs.initialPortfolio,
       retirementYear: Number(params.get('ry')) || defaultInputs.retirementYear,
       childBirthYear: Number(params.get('cb')) || defaultInputs.childBirthYear,
       filingStatus: params.get('fs') || defaultInputs.filingStatus,
@@ -285,6 +287,7 @@ const FIRECalculator = () => {
     params.set('wi', inputs.workingIncome);
     params.set('ri', inputs.retiredIncome);
     params.set('bs', inputs.baseSpending);
+    params.set('ip', inputs.initialPortfolio);
     params.set('ry', inputs.retirementYear);
     params.set('cb', inputs.childBirthYear);
     params.set('fs', inputs.filingStatus);
@@ -389,7 +392,7 @@ const FIRECalculator = () => {
 
   const calculateYearByYear = (retirementYear, childBirthYear, includeChild) => {
     const results = [];
-    let portfolio = 0;
+    let portfolio = inputs.initialPortfolio;
     const returnMultiplier = 1 + inputs.returnRate / 100;
     const max401k = 23500;
     const maxHSA = 4300;
@@ -557,7 +560,18 @@ const FIRECalculator = () => {
             className="w-full p-1.5 border rounded text-sm"
           />
         </div>
-        
+
+        <div>
+          <label className="block text-xs font-medium mb-1">Initial Portfolio</label>
+          <input
+            type="number"
+            step="10000"
+            value={inputs.initialPortfolio}
+            onChange={(e) => setInputs({...inputs, initialPortfolio: Number(e.target.value)})}
+            className="w-full p-1.5 border rounded text-sm"
+          />
+        </div>
+
         {mode === 'simple' && (
           <div>
             <label className="block text-xs font-medium mb-1">Retirement Year</label>
