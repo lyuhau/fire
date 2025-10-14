@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selectedCell, onCellClick }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
+  const svgRef = React.useRef(null);
 
   const width = 600;
   const height = 400;
@@ -26,8 +27,49 @@ const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selected
     return height - marginBottom - (childYear + 1) * cellHeight; // 0 at bottom, 25 near top
   };
 
+  const handleKeyDown = (e) => {
+    if (!selectedCell) return;
+
+    const currentRetIndex = retirementYears.indexOf(selectedCell.retirementYear);
+    const currentChildIndex = childBirthYears.indexOf(selectedCell.childBirthYear);
+
+    let newRetIndex = currentRetIndex;
+    let newChildIndex = currentChildIndex;
+
+    switch(e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        newRetIndex = Math.max(0, currentRetIndex - 1);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        newRetIndex = Math.min(retirementYears.length - 1, currentRetIndex + 1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        newChildIndex = Math.min(childBirthYears.length - 1, currentChildIndex + 1);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        newChildIndex = Math.max(0, currentChildIndex - 1);
+        break;
+      default:
+        return;
+    }
+
+    if (newRetIndex !== currentRetIndex || newChildIndex !== currentChildIndex) {
+      onCellClick(retirementYears[newRetIndex], childBirthYears[newChildIndex]);
+    }
+  };
+
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      ref={svgRef}
+      style={{ outline: 'none' }}
+    >
       <svg width={width} height={height} className="border border-gray-200">
         {/* Grid lines */}
         <g>
@@ -427,26 +469,29 @@ const FIRECalculator = () => {
           <label className="block text-xs font-medium mb-1">Working Income</label>
           <input
             type="number"
+            step="1000"
             value={inputs.workingIncome}
             onChange={(e) => setInputs({...inputs, workingIncome: Number(e.target.value)})}
             className="w-full p-1.5 border rounded text-sm"
           />
         </div>
-        
+
         <div>
           <label className="block text-xs font-medium mb-1">Retired Income</label>
           <input
             type="number"
+            step="1000"
             value={inputs.retiredIncome}
             onChange={(e) => setInputs({...inputs, retiredIncome: Number(e.target.value)})}
             className="w-full p-1.5 border rounded text-sm"
           />
         </div>
-        
+
         <div>
           <label className="block text-xs font-medium mb-1">Base Annual Spending</label>
           <input
             type="number"
+            step="1000"
             value={inputs.baseSpending}
             onChange={(e) => setInputs({...inputs, baseSpending: Number(e.target.value)})}
             className="w-full p-1.5 border rounded text-sm"
