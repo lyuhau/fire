@@ -728,13 +728,17 @@ const FIRECalculator = () => {
 
         <div>
           <label className="block text-xs font-medium mb-1">Working Income</label>
-          <input
-            type="number"
-            step="1000"
-            value={inputs.workingIncome}
-            onChange={(e) => setInputs({...inputs, workingIncome: Number(e.target.value)})}
-            className="w-full p-1.5 border rounded text-sm"
-          />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 pointer-events-none">$</span>
+            <input
+              type="number"
+              step="1000"
+              min="0"
+              value={Number(inputs.workingIncome).toString()}
+              onChange={(e) => setInputs({...inputs, workingIncome: Number(e.target.value)})}
+              className="w-full p-1.5 pl-6 border rounded text-sm"
+            />
+          </div>
         </div>
 
         <div>
@@ -744,24 +748,34 @@ const FIRECalculator = () => {
               <InfoTooltip text="Additional income you expect during retirement, such as Social Security, pensions, part-time work, or rental income. This reduces how much you need to withdraw from your portfolio." />
             </span>
           </label>
-          <input
-            type="number"
-            step="1000"
-            value={inputs.retiredIncome}
-            onChange={(e) => setInputs({...inputs, retiredIncome: Number(e.target.value)})}
-            className="w-full p-1.5 border rounded text-sm"
-          />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 pointer-events-none">$</span>
+            <input
+              type="number"
+              step="1000"
+              min="0"
+              value={Number(inputs.retiredIncome).toString()}
+              onChange={(e) => setInputs({...inputs, retiredIncome: Number(e.target.value)})}
+              className="w-full p-1.5 pl-6 border rounded text-sm"
+            />
+          </div>
         </div>
 
         <div>
           <label className="block text-xs font-medium mb-1">Base Annual Spending</label>
-          <input
-            type="number"
-            step="1000"
-            value={inputs.baseSpending}
-            onChange={(e) => setInputs({...inputs, baseSpending: Number(e.target.value)})}
-            className="w-full p-1.5 border rounded text-sm"
-          />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-red-600 pointer-events-none">($</span>
+            <input
+              type="number"
+              step="1000"
+              min="0"
+              value={Number(inputs.baseSpending).toString()}
+              onChange={(e) => setInputs({...inputs, baseSpending: Number(e.target.value)})}
+              className="w-full p-1.5 pl-8 border rounded text-sm text-red-600"
+              style={{paddingRight: '0.375rem'}}
+            />
+            <span className="absolute top-1/2 -translate-y-1/2 text-sm text-red-600 pointer-events-none" style={{left: `${32 + inputs.baseSpending.toString().length * 8.5 + 2}px`}}>)</span>
+          </div>
         </div>
 
         {/* Empty spacers to complete the row */}
@@ -778,13 +792,17 @@ const FIRECalculator = () => {
 
         <div>
           <label className="block text-xs font-medium mb-1">Initial Portfolio</label>
-          <input
-            type="number"
-            step="10000"
-            value={inputs.initialPortfolio}
-            onChange={(e) => setInputs({...inputs, initialPortfolio: Number(e.target.value)})}
-            className="w-full p-1.5 border rounded text-sm"
-          />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 pointer-events-none">$</span>
+            <input
+              type="number"
+              step="10000"
+              min="0"
+              value={Number(inputs.initialPortfolio).toString()}
+              onChange={(e) => setInputs({...inputs, initialPortfolio: Number(e.target.value)})}
+              className="w-full p-1.5 pl-6 border rounded text-sm"
+            />
+          </div>
         </div>
 
         <div>
@@ -1096,13 +1114,17 @@ const FIRECalculator = () => {
                   <InfoTooltip text="Your partner's annual working income. This is added to household income until they retire." />
                 </span>
               </label>
-              <input
-                type="number"
-                step="1000"
-                value={inputs.partnerIncome}
-                onChange={(e) => setInputs({...inputs, partnerIncome: Number(e.target.value)})}
-                className="w-full p-1.5 border rounded text-sm"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 pointer-events-none">$</span>
+                <input
+                  type="number"
+                  step="1000"
+                  min="0"
+                  value={Number(inputs.partnerIncome).toString()}
+                  onChange={(e) => setInputs({...inputs, partnerIncome: Number(e.target.value)})}
+                  className="w-full p-1.5 pl-6 border rounded text-sm"
+                />
+              </div>
             </div>
 
             <div>
@@ -1112,13 +1134,17 @@ const FIRECalculator = () => {
                   <InfoTooltip text="Your partner's income during retirement (Social Security, pensions, etc.). Added to household income after they retire." />
                 </span>
               </label>
-              <input
-                type="number"
-                step="1000"
-                value={inputs.partnerRetiredIncome}
-                onChange={(e) => setInputs({...inputs, partnerRetiredIncome: Number(e.target.value)})}
-                className="w-full p-1.5 border rounded text-sm"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-600 pointer-events-none">$</span>
+                <input
+                  type="number"
+                  step="1000"
+                  min="0"
+                  value={Number(inputs.partnerRetiredIncome).toString()}
+                  onChange={(e) => setInputs({...inputs, partnerRetiredIncome: Number(e.target.value)})}
+                  className="w-full p-1.5 pl-6 border rounded text-sm"
+                />
+              </div>
             </div>
 
             <div>
@@ -1128,13 +1154,19 @@ const FIRECalculator = () => {
                   <InfoTooltip text="Extra annual expenses from combining households (larger home, additional car, increased utilities, etc.). Added to base spending when partner joins." />
                 </span>
               </label>
-              <input
-                type="number"
-                step="1000"
-                value={inputs.partnerExpenses}
-                onChange={(e) => setInputs({...inputs, partnerExpenses: Number(e.target.value)})}
-                className="w-full p-1.5 border rounded text-sm"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-red-600 pointer-events-none">($</span>
+                <input
+                  type="number"
+                  step="1000"
+                  min="0"
+                  value={Number(inputs.partnerExpenses).toString()}
+                  onChange={(e) => setInputs({...inputs, partnerExpenses: Number(e.target.value)})}
+                  className="w-full p-1.5 pl-8 border rounded text-sm text-red-600"
+                  style={{paddingRight: '0.375rem'}}
+                />
+                <span className="absolute top-1/2 -translate-y-1/2 text-sm text-red-600 pointer-events-none" style={{left: `${32 + inputs.partnerExpenses.toString().length * 8.5 + 2}px`}}>)</span>
+              </div>
             </div>
 
             <div>
