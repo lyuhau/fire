@@ -205,7 +205,7 @@ const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selected
             fontWeight="bold"
             transform={`rotate(-90, 20, ${marginTop + plotHeight / 2})`}
           >
-            Child Birth Year
+            First Child Birth Year
           </text>
         </g>
       </svg>
@@ -593,6 +593,27 @@ const FIRECalculator = () => {
     return null;
   };
 
+  // Info tooltip component
+  const InfoTooltip = ({ text, children, isOnBlueBackground = false }) => {
+    return (
+      <div className="relative inline-flex group ml-1 translate-y-[-1px]">
+        <span className={`inline-flex items-center justify-center w-3 h-3 text-[9px] font-bold italic cursor-pointer rounded-full pt-[1px] ${
+          isOnBlueBackground
+            ? 'text-white border-[1.5px] border-white'
+            : 'text-blue-600 border-[1.5px] border-blue-500'
+        }`}>
+          i
+        </span>
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2 text-xs font-normal normal-case tracking-normal text-white bg-gray-800 rounded shadow-lg z-50">
+          <div className="relative">
+            {children || text}
+            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-800"></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto p-6 bg-white">
       <div className="flex items-center justify-between mb-6">
@@ -609,23 +630,31 @@ const FIRECalculator = () => {
       <div className="mb-6 flex gap-2">
         <button
           onClick={() => setMode('simple')}
-          className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+          className={`px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center ${
             mode === 'simple'
               ? 'bg-blue-600 text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
           Simple Mode
+          <InfoTooltip
+            text="Customize all inputs individually. Perfect for planning your specific situation with precise control over each parameter."
+            isOnBlueBackground={mode === 'simple'}
+          />
         </button>
         <button
           onClick={() => setMode('advanced')}
-          className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+          className={`px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center ${
             mode === 'advanced'
               ? 'bg-blue-600 text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          Scenario Explorer
+          Planning Grid
+          <InfoTooltip
+            text="Compare retirement timing vs. child timing in a grid. Each cell shows whether that combination is sustainable. Click cells to see detailed projections."
+            isOnBlueBackground={mode === 'advanced'}
+          />
         </button>
       </div>
 
@@ -650,7 +679,12 @@ const FIRECalculator = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-medium mb-1">Retired Income</label>
+          <label className="flex justify-between items-center text-xs font-medium mb-1">
+            <span>Retired Income</span>
+            <span className="mr-1">
+              <InfoTooltip text="Additional income you expect during retirement, such as Social Security, pensions, part-time work, or rental income. This reduces how much you need to withdraw from your portfolio." />
+            </span>
+          </label>
           <input
             type="number"
             step="1000"
@@ -695,7 +729,12 @@ const FIRECalculator = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-medium mb-1">Return Rate (% real)</label>
+          <label className="flex justify-between items-center text-xs font-medium mb-1">
+            <span>Return Rate (% real)</span>
+            <span className="mr-1">
+              <InfoTooltip text="Expected annual return after inflation. For example, if you expect 10% returns and 3% inflation, use 7%. This 'real' return keeps everything in today's dollars." />
+            </span>
+          </label>
           <input
             type="number"
             value={inputs.returnRate}
@@ -744,8 +783,27 @@ const FIRECalculator = () => {
         <div className="col-span-1 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500">
           Timeline
         </div>
-        <div className="col-span-4 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500">
+        <div className="col-span-4 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500 flex items-center">
           Children
+          <InfoTooltip>
+            <div>
+              <p className="mb-2">Plan for children costs. Multiply by Lifestyle Level to adjust.</p>
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-600">
+                    <th className="text-left py-1">Age Range</th>
+                    <th className="text-right py-1">Annual Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td className="py-0.5">0-4 years</td><td className="text-right">$20k</td></tr>
+                  <tr><td className="py-0.5">5-17 years</td><td className="text-right">$15k</td></tr>
+                  <tr><td className="py-0.5">18-21 (state)</td><td className="text-right">$50k</td></tr>
+                  <tr><td className="py-0.5">18-21 (private)</td><td className="text-right">$80k</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </InfoTooltip>
         </div>
         {/* Timeline - Simple mode */}
         {mode === 'simple' && (
@@ -763,9 +821,12 @@ const FIRECalculator = () => {
         {/* Timeline - Scenario Explorer mode */}
         {mode === 'advanced' && (
           <div className="bg-gray-100 p-2 rounded">
-            <div className="flex items-center justify-between mb-0.5">
+            <div className="flex items-start justify-between mb-0.5">
               <label className="text-xs font-medium text-gray-600">Retirement Year</label>
-              <span className="text-xs text-gray-500 italic">Grid controlled</span>
+              <div className="flex items-start gap-1 mr-1">
+                <InfoTooltip text="This value is controlled by clicking cells in the grid below. The grid sweeps different retirement years (X-axis) to help you explore scenarios." />
+                <span className="text-[10px] text-gray-400 italic leading-3">Grid controlled</span>
+              </div>
             </div>
             <div className="text-base font-semibold text-gray-700">
               {selectedCell ? selectedCell.retirementYear : inputs.retirementYear}
@@ -792,7 +853,25 @@ const FIRECalculator = () => {
             {inputs.numberOfChildren > 0 && (
               <>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Cost Level</label>
+                  <label className="flex justify-between items-center text-xs font-medium mb-1">
+                    <span>Lifestyle Level</span>
+                    <span className="mr-1">
+                      <InfoTooltip>
+                        <div>
+                          <p className="mb-2">Scales all child costs by a multiplier:</p>
+                          <table className="w-full text-xs">
+                            <tbody>
+                              <tr><td>Minimal</td><td className="text-right">0.5x</td></tr>
+                              <tr><td>Basic</td><td className="text-right">0.75x</td></tr>
+                              <tr><td>Standard</td><td className="text-right">1.0x</td></tr>
+                              <tr><td>Comfortable</td><td className="text-right">1.5x</td></tr>
+                              <tr><td>Premium</td><td className="text-right">2.0x</td></tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </InfoTooltip>
+                    </span>
+                  </label>
                   <select
                     value={inputs.childCostScale}
                     onChange={(e) => setInputs({...inputs, childCostScale: Number(e.target.value)})}
@@ -850,9 +929,12 @@ const FIRECalculator = () => {
             {inputs.numberOfChildren > 0 && (
               <>
                 <div className="bg-gray-100 p-2 rounded">
-                  <div className="flex items-center justify-between mb-0.5">
+                  <div className="flex items-start justify-between mb-0.5">
                     <label className="text-xs font-medium text-gray-600">First Child Year</label>
-                    <span className="text-xs text-gray-500 italic">Grid controlled</span>
+                    <div className="flex items-start gap-1 mr-1">
+                      <InfoTooltip text="This value is controlled by clicking cells in the grid below. The grid sweeps different first child birth years (Y-axis). Additional children are spaced using 'Child Spacing'." />
+                      <span className="text-[10px] text-gray-400 italic leading-3">Grid controlled</span>
+                    </div>
                   </div>
                   <div className="text-base font-semibold text-gray-700">
                     {selectedCell
@@ -875,7 +957,25 @@ const FIRECalculator = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium mb-1">Cost Level</label>
+                  <label className="flex justify-between items-center text-xs font-medium mb-1">
+                    <span>Lifestyle Level</span>
+                    <span className="mr-1">
+                      <InfoTooltip>
+                        <div>
+                          <p className="mb-2">Scales all child costs by a multiplier:</p>
+                          <table className="w-full text-xs">
+                            <tbody>
+                              <tr><td>Minimal</td><td className="text-right">0.5x</td></tr>
+                              <tr><td>Basic</td><td className="text-right">0.75x</td></tr>
+                              <tr><td>Standard</td><td className="text-right">1.0x</td></tr>
+                              <tr><td>Comfortable</td><td className="text-right">1.5x</td></tr>
+                              <tr><td>Premium</td><td className="text-right">2.0x</td></tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </InfoTooltip>
+                    </span>
+                  </label>
                   <select
                     value={inputs.childCostScale}
                     onChange={(e) => setInputs({...inputs, childCostScale: Number(e.target.value)})}
@@ -957,10 +1057,10 @@ const FIRECalculator = () => {
           </div>
         </>
       ) : (
-        // Scenario Explorer mode: side-by-side layout with grid
+        // Planning Grid mode: side-by-side layout with grid
         <div className="mb-6 flex gap-4">
           <div className="flex-shrink-0">
-            <h2 className="text-base font-semibold mb-1">Scenario Explorer</h2>
+            <h2 className="text-base font-semibold mb-1">Planning Grid</h2>
             <div className="text-xs text-gray-600 mb-1">
               Click cells: <span className="text-red-600">■</span> Runs out → <span className="text-yellow-600">■</span> Marginal → <span className="text-green-600">■</span> Sustainable
             </div>
