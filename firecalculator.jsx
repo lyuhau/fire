@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selectedCell, onCellClick }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
@@ -514,7 +515,30 @@ const FIRECalculator = () => {
   }
 
   const allResults = calculateYearByYear(displayRetirementYear, displayChildBirthYears);
-  const chartData = allResults.slice(0, 35);
+
+  // Calculate last interesting year dynamically
+  const getLastInterestingYear = (results) => {
+    // Find last year with child costs
+    let lastChildCostYear = 0;
+    for (let i = results.length - 1; i >= 0; i--) {
+      if (results[i].childCost > 0) {
+        lastChildCostYear = results[i].year;
+        break;
+      }
+    }
+
+    // Find year portfolio runs out (if it does)
+    const runsOutYear = results.find(r => r.portfolio < 0)?.year || 0;
+
+    // Take the later of: last child cost, portfolio runs out, or minimum 35
+    const lastEvent = Math.max(lastChildCostYear, runsOutYear, 35);
+
+    // Add 5-year buffer, cap at 100
+    return Math.min(lastEvent + 5, 100);
+  };
+
+  const lastYear = getLastInterestingYear(allResults);
+  const chartData = allResults.slice(0, lastYear);
   const retirementYear = allResults.find(r => r.year === displayRetirementYear);
   const portfolioRunsOut = allResults.some(r => r.isRetired && r.portfolio < 0);
   const yearRunsOut = portfolioRunsOut ? allResults.find(r => r.portfolio < 0)?.year : null;
