@@ -596,7 +596,7 @@ const FIRECalculator = () => {
   return (
     <div className="w-full max-w-7xl mx-auto p-6 bg-white">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">FIRE Calculator MVP</h1>
+        <h1 className="text-3xl font-bold text-gray-800">FIRE Calculator</h1>
         <button
           onClick={resetToDefaults}
           className="text-xs text-gray-500 hover:text-gray-700 underline"
