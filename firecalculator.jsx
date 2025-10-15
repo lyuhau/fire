@@ -566,6 +566,33 @@ const FIRECalculator = () => {
     }
   };
 
+  // Format large numbers as "1M", "500k", etc.
+  const formatCurrency = (value) => {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+      return `$${(value / 1000).toFixed(0)}k`;
+    }
+    return `$${value}`;
+  };
+
+  // Custom tooltip component
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border-2 border-gray-300 rounded shadow-lg">
+          <p className="font-semibold text-sm mb-1">Year {label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }}>
+              {entry.name}: ${entry.value.toLocaleString()}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto p-6 bg-white">
       <div className="flex items-center justify-between mb-6">
@@ -905,12 +932,23 @@ const FIRECalculator = () => {
           <div className="mb-6">
             <h2 className="text-lg font-semibold mb-2">Portfolio Growth & Annual Spending</h2>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={chartData}>
+              <LineChart data={chartData} margin={{ left: 20, right: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="year" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                <YAxis
+                  yAxisId="left"
+                  tickFormatter={formatCurrency}
+                  tick={{ fill: '#2563eb' }}
+                  label={{ value: 'Portfolio', angle: -90, position: 'left', style: { textAnchor: 'middle', fill: '#2563eb' } }}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tickFormatter={formatCurrency}
+                  tick={{ fill: '#16a34a' }}
+                  label={{ value: 'Spending', angle: 90, position: 'right', style: { textAnchor: 'middle', fill: '#16a34a' } }}
+                />
+                <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 <Line yAxisId="left" type="monotone" dataKey="portfolio" stroke="#2563eb" strokeWidth={2} name="Portfolio" />
                 <Line yAxisId="right" type="monotone" dataKey="spending" stroke="#16a34a" strokeWidth={2} name="Annual Spending" />
@@ -964,12 +1002,25 @@ const FIRECalculator = () => {
             <div>
               <h2 className="text-base font-semibold mb-1">Portfolio Growth & Spending</h2>
               <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={chartData}>
+                <LineChart data={chartData} margin={{ left: 20, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="year" tick={{fontSize: 11}} />
-                  <YAxis yAxisId="left" tick={{fontSize: 11}} animationDuration={500} />
-                  <YAxis yAxisId="right" orientation="right" tick={{fontSize: 11}} animationDuration={500} />
-                  <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                  <YAxis
+                    yAxisId="left"
+                    tick={{ fontSize: 11, fill: '#2563eb' }}
+                    tickFormatter={formatCurrency}
+                    animationDuration={500}
+                    label={{ value: 'Portfolio', angle: -90, position: 'left', style: { textAnchor: 'middle', fontSize: 12, fill: '#2563eb' } }}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 11, fill: '#16a34a' }}
+                    tickFormatter={formatCurrency}
+                    animationDuration={500}
+                    label={{ value: 'Spending', angle: 90, position: 'right', style: { textAnchor: 'middle', fontSize: 12, fill: '#16a34a' } }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend wrapperStyle={{fontSize: 12}} />
                   <Line yAxisId="left" type="monotone" dataKey="portfolio" stroke="#2563eb" strokeWidth={2} name="Portfolio" animationDuration={500} />
                   <Line yAxisId="right" type="monotone" dataKey="spending" stroke="#16a34a" strokeWidth={2} name="Spending" animationDuration={500} />
