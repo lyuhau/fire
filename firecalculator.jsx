@@ -821,15 +821,32 @@ const FIRECalculator = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-medium mb-1">Filing Status</label>
-          <select
-            value={inputs.filingStatus}
-            onChange={(e) => setInputs({...inputs, filingStatus: e.target.value})}
-            className="w-full p-1.5 border rounded text-sm"
-          >
-            <option value="single">Single</option>
-            <option value="married">Married</option>
-          </select>
+          {inputs.yearPartnerJoins !== -1 ? (
+            <div className="bg-gray-100 p-2 rounded">
+              <div className="flex items-start justify-between mb-0.5">
+                <label className="text-xs font-medium text-gray-600">Filing Status</label>
+                <div className="flex items-start gap-1 mr-1">
+                  <InfoTooltip text="Filing status is automatically set to Married when a partner is enabled. Disable the partner to change this." />
+                  <span className="text-[10px] text-gray-400 italic leading-3">Partner controlled</span>
+                </div>
+              </div>
+              <div className="text-base font-semibold text-gray-700">
+                Married <span className="text-sm font-normal text-gray-500">in year {inputs.yearPartnerJoins}</span>
+              </div>
+            </div>
+          ) : (
+            <>
+              <label className="block text-xs font-medium mb-1">Filing Status</label>
+              <select
+                value={inputs.filingStatus}
+                onChange={(e) => setInputs({...inputs, filingStatus: e.target.value})}
+                className="w-full p-1.5 border rounded text-sm"
+              >
+                <option value="single">Single</option>
+                <option value="married">Married</option>
+              </select>
+            </>
+          )}
         </div>
 
         <div>
