@@ -18,7 +18,7 @@ const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selected
   const cellWidth = plotWidth / retirementYears.length;
   const cellHeight = plotHeight / childBirthYears.length;
 
-  const xScale = (retYear) => marginLeft + (retYear - 5) * cellWidth;
+  const xScale = (retYear) => marginLeft + retYear * cellWidth;
   // Reverse Y-axis: 0 at bottom, 25 at top, -1 (no child) above 25
   const yScale = (childYear) => {
     if (childYear === -1) {
@@ -136,7 +136,7 @@ const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selected
             stroke="black"
             strokeWidth={2}
           />
-          {[5, 10, 15, 20, 25, 30].map(year => (
+          {[0, 5, 10, 15, 20, 25, 30].map(year => (
             <g key={`xtick-${year}`}>
               <line
                 x1={xScale(year)}
@@ -531,7 +531,7 @@ const FIRECalculator = () => {
   };
 
   // Calculate heatmap data - only store metrics, not full results
-  const retirementYears = Array.from({length: 26}, (_, i) => i + 5); // 5-30
+  const retirementYears = Array.from({length: 31}, (_, i) => i); // 0-30
   const childBirthYears = [...Array.from({length: 26}, (_, i) => i), -1]; // 0-25 then "none"
 
   // Only store metrics for heatmap visualization
