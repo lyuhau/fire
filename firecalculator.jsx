@@ -247,6 +247,11 @@ const FIRECalculator = () => {
     childSpacing: 3,
     childCostScale: 1.0,
     privateCollege: false,
+    yearPartnerJoins: -1, // -1 means "Never"
+    partnerIncome: 0,
+    partnerRetiredIncome: 0,
+    partnerExpenses: 0,
+    partnerRetireYear: 15,
     filingStatus: 'single',
     state: 'ny',
     city: 'nyc',
@@ -277,6 +282,11 @@ const FIRECalculator = () => {
       childSpacing: Number(params.get('sp')) || defaultInputs.childSpacing,
       childCostScale: Number(params.get('cs')) || defaultInputs.childCostScale,
       privateCollege: params.get('pc') === 'true' || defaultInputs.privateCollege,
+      yearPartnerJoins: params.get('pj') ? Number(params.get('pj')) : defaultInputs.yearPartnerJoins,
+      partnerIncome: Number(params.get('pi')) || defaultInputs.partnerIncome,
+      partnerRetiredIncome: Number(params.get('pri')) || defaultInputs.partnerRetiredIncome,
+      partnerExpenses: Number(params.get('pe')) || defaultInputs.partnerExpenses,
+      partnerRetireYear: Number(params.get('pr')) || defaultInputs.partnerRetireYear,
       filingStatus: params.get('fs') || defaultInputs.filingStatus,
       state: params.get('st') || defaultInputs.state,
       city: params.get('ct') || defaultInputs.city,
@@ -307,6 +317,11 @@ const FIRECalculator = () => {
     params.set('sp', inputs.childSpacing);
     params.set('cs', inputs.childCostScale);
     params.set('pc', inputs.privateCollege);
+    params.set('pj', inputs.yearPartnerJoins);
+    params.set('pi', inputs.partnerIncome);
+    params.set('pri', inputs.partnerRetiredIncome);
+    params.set('pe', inputs.partnerExpenses);
+    params.set('pr', inputs.partnerRetireYear);
     params.set('fs', inputs.filingStatus);
     params.set('st', inputs.state);
     params.set('ct', inputs.city);
@@ -457,7 +472,21 @@ const FIRECalculator = () => {
 
     for (let year = 1; year <= 100; year++) {
       const isRetired = year > retirementYear;
-      const income = isRetired ? inputs.retiredIncome : inputs.workingIncome;
+
+      // Check if partner has joined and is working
+      const hasPartner = inputs.yearPartnerJoins !== -1 && year >= inputs.yearPartnerJoins;
+      const partnerIsRetired = hasPartner && year > inputs.partnerRetireYear;
+
+      // Calculate total income (user + partner if applicable)
+      let income = isRetired ? inputs.retiredIncome : inputs.workingIncome;
+      if (hasPartner) {
+        if (partnerIsRetired) {
+          income += inputs.partnerRetiredIncome;
+        } else {
+          income += inputs.partnerIncome;
+        }
+      }
+
       const preTaxContributions = isRetired ? 0 : max401k + maxHSA;
 
       // Calculate total child costs from all children
@@ -472,9 +501,15 @@ const FIRECalculator = () => {
         }
       });
 
-      const totalSpending = inputs.baseSpending + totalChildCost;
+      // Add partner expenses if partner has joined
+      const partnerExpenses = hasPartner ? inputs.partnerExpenses : 0;
+      const totalSpending = inputs.baseSpending + totalChildCost + partnerExpenses;
+
+      // Use married filing status if partner has joined
+      const effectiveFilingStatus = hasPartner ? 'married' : inputs.filingStatus;
+
       const taxableIncome = income - preTaxContributions;
-      const taxes = calculateTaxes(taxableIncome, inputs.filingStatus, inputs.state, inputs.city);
+      const taxes = calculateTaxes(taxableIncome, effectiveFilingStatus, inputs.state, inputs.city);
       const iraContribution = isRetired ? 0 : maxIRA;
       const netSavings = income - preTaxContributions - taxes.total - iraContribution - totalSpending;
       portfolio = portfolio * returnMultiplier + netSavings + preTaxContributions + iraContribution;
@@ -808,6 +843,12 @@ const FIRECalculator = () => {
           Timeline
         </div>
         <div className="col-span-4 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500 flex items-center">
+          <input
+            type="checkbox"
+            checked={inputs.numberOfChildren > 0}
+            onChange={(e) => updateNumberOfChildren(e.target.checked ? 1 : 0)}
+            className="mr-2"
+          />
           Children
           <InfoTooltip>
             <div>
@@ -859,24 +900,21 @@ const FIRECalculator = () => {
         )}
 
         {/* Children - Simple mode */}
-        {mode === 'simple' && (
+        {mode === 'simple' && inputs.numberOfChildren > 0 && (
           <>
             <div>
               <label className="block text-xs font-medium mb-1">Number of Children</label>
-              <select
+              <input
+                type="number"
                 value={inputs.numberOfChildren}
                 onChange={(e) => updateNumberOfChildren(Number(e.target.value))}
                 className="w-full p-1.5 border rounded text-sm"
-              >
-                {[0, 1, 2, 3, 4, 5].map(n => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+                min="1"
+                max="10"
+              />
             </div>
 
-            {inputs.numberOfChildren > 0 && (
-              <>
-                <div>
+            <div>
                   <label className="flex justify-between items-center text-xs font-medium mb-1">
                     <span>Lifestyle Level</span>
                     <span className="mr-1">
@@ -930,29 +968,24 @@ const FIRECalculator = () => {
                     />
                   </div>
                 ))}
-              </>
-            )}
           </>
         )}
 
-        {mode === 'advanced' && (
+        {mode === 'advanced' && inputs.numberOfChildren > 0 && (
           <>
             <div>
               <label className="block text-xs font-medium mb-1">Number of Children</label>
-              <select
+              <input
+                type="number"
                 value={inputs.numberOfChildren}
                 onChange={(e) => updateNumberOfChildren(Number(e.target.value))}
                 className="w-full p-1.5 border rounded text-sm"
-              >
-                {[0, 1, 2, 3, 4, 5].map(n => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+                min="1"
+                max="10"
+              />
             </div>
 
-            {inputs.numberOfChildren > 0 && (
-              <>
-                <div className="bg-gray-100 p-2 rounded">
+            <div className="bg-gray-100 p-2 rounded">
                   <div className="flex items-start justify-between mb-0.5">
                     <label className="text-xs font-medium text-gray-600">First Child Year</label>
                     <div className="flex items-start gap-1 mr-1">
@@ -1022,8 +1055,105 @@ const FIRECalculator = () => {
                   />
                   <label className="text-xs font-medium">Private College</label>
                 </div>
-              </>
-            )}
+          </>
+        )}
+
+        {/* Partner Section */}
+        <div className="col-span-5 text-xs font-bold text-gray-800 uppercase tracking-wide mt-2 mb-1 pb-1 border-b-2 border-gray-500 flex items-center">
+          <input
+            type="checkbox"
+            checked={inputs.yearPartnerJoins !== -1}
+            onChange={(e) => setInputs({...inputs, yearPartnerJoins: e.target.checked ? 1 : -1})}
+            className="mr-2"
+          />
+          Partner
+          <InfoTooltip text="Plan for a partner joining your finances. When a partner joins, their income and expenses are added to calculations and filing status automatically switches to Married." />
+        </div>
+
+        {inputs.yearPartnerJoins !== -1 && (
+          <>
+            <div>
+              <label className="flex justify-between items-center text-xs font-medium mb-1">
+                <span>Year Partner Joins</span>
+                <span className="mr-1">
+                  <InfoTooltip text="The year your partner's finances merge with yours (marriage, shared finances, etc.)." />
+                </span>
+              </label>
+              <input
+                type="number"
+                value={inputs.yearPartnerJoins}
+                onChange={(e) => setInputs({...inputs, yearPartnerJoins: Number(e.target.value)})}
+                className="w-full p-1.5 border rounded text-sm"
+                min="0"
+                max="30"
+              />
+            </div>
+
+            <div>
+              <label className="flex justify-between items-center text-xs font-medium mb-1">
+                <span>Partner Income</span>
+                <span className="mr-1">
+                  <InfoTooltip text="Your partner's annual working income. This is added to household income until they retire." />
+                </span>
+              </label>
+              <input
+                type="number"
+                step="1000"
+                value={inputs.partnerIncome}
+                onChange={(e) => setInputs({...inputs, partnerIncome: Number(e.target.value)})}
+                className="w-full p-1.5 border rounded text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="flex justify-between items-center text-xs font-medium mb-1">
+                <span>Partner Retired Income</span>
+                <span className="mr-1">
+                  <InfoTooltip text="Your partner's income during retirement (Social Security, pensions, etc.). Added to household income after they retire." />
+                </span>
+              </label>
+              <input
+                type="number"
+                step="1000"
+                value={inputs.partnerRetiredIncome}
+                onChange={(e) => setInputs({...inputs, partnerRetiredIncome: Number(e.target.value)})}
+                className="w-full p-1.5 border rounded text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="flex justify-between items-center text-xs font-medium mb-1">
+                <span>Additional Household Expenses</span>
+                <span className="mr-1">
+                  <InfoTooltip text="Extra annual expenses from combining households (larger home, additional car, increased utilities, etc.). Added to base spending when partner joins." />
+                </span>
+              </label>
+              <input
+                type="number"
+                step="1000"
+                value={inputs.partnerExpenses}
+                onChange={(e) => setInputs({...inputs, partnerExpenses: Number(e.target.value)})}
+                className="w-full p-1.5 border rounded text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="flex justify-between items-center text-xs font-medium mb-1">
+                <span>Partner Retire Year</span>
+                <span className="mr-1">
+                  <InfoTooltip text="The year your partner retires and their income stops. Can be different from your retirement year." />
+                </span>
+              </label>
+              <input
+                type="number"
+                value={inputs.partnerRetireYear}
+                onChange={(e) => setInputs({...inputs, partnerRetireYear: Number(e.target.value)})}
+                className="w-full p-1.5 border rounded text-sm"
+              />
+            </div>
+
+            {/* Empty spacer to complete the row */}
+            <div></div>
           </>
         )}
       </div>
