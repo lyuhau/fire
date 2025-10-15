@@ -193,7 +193,7 @@ const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selected
                 textAnchor="end"
                 fontSize={12}
               >
-                {year === -1 ? 'None' : year}
+                {year === -1 ? 'Never' : year}
               </text>
             </g>
           ))}
@@ -221,7 +221,7 @@ const SVGHeatmap = ({ data, retirementYears, childBirthYears, getColor, selected
         >
           <p className="font-semibold text-sm">Retirement: Year {hoveredCell.retirementYear}</p>
           <p className="font-semibold text-sm">
-            Child: {hoveredCell.childBirthYear === -1 ? 'None' : `Year ${hoveredCell.childBirthYear}`}
+            Child: {hoveredCell.childBirthYear === -1 ? 'Never' : `Year ${hoveredCell.childBirthYear}`}
           </p>
           <p className="mt-1 text-sm">
             {hoveredCell.metric < 100
@@ -532,7 +532,7 @@ const FIRECalculator = () => {
 
   // Calculate heatmap data - only store metrics, not full results
   const retirementYears = Array.from({length: 31}, (_, i) => i); // 0-30
-  const childBirthYears = [...Array.from({length: 26}, (_, i) => i), -1]; // 0-25 then "none"
+  const childBirthYears = [...Array.from({length: 26}, (_, i) => i), -1]; // 0-25 then "Never"
 
   // Only store metrics for heatmap visualization
   const heatmapData = [];
@@ -856,7 +856,7 @@ const FIRECalculator = () => {
                   </div>
                   <div className="text-base font-semibold text-gray-700">
                     {selectedCell
-                      ? (selectedCell.childBirthYear === -1 ? 'None' : selectedCell.childBirthYear)
+                      ? (selectedCell.childBirthYear === -1 ? 'Never' : selectedCell.childBirthYear)
                       : (inputs.childBirthYears.length > 0 ? inputs.childBirthYears[0] : 0)
                     }
                   </div>
@@ -1037,7 +1037,7 @@ const FIRECalculator = () => {
           {mode === 'advanced' && selectedCell && (
             <span className="text-base font-normal text-gray-600 ml-2">
               (Showing: Retire Year {selectedCell.retirementYear},
-              Child {selectedCell.childBirthYear === -1 ? 'None' : `Year ${selectedCell.childBirthYear}`})
+              Child {selectedCell.childBirthYear === -1 ? 'Never' : `Year ${selectedCell.childBirthYear}`})
             </span>
           )}
         </h2>
